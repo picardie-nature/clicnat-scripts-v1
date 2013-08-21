@@ -10,8 +10,8 @@ require_once(OBS_DIR.'extractions-conditions.php');
 
 get_db($db);
 
-define("SELECTION", 11352);
-define("LISTE_ESPACE", 84);
+define("SELECTION", 11875);
+define("LISTE_ESPACE", 115);
 
 $tables_recherche = array('espace_point', 'espace_chiro', 'espace_line', 'espace_polygon');
 
@@ -20,8 +20,26 @@ $selection = new bobs_selection($db, SELECTION);
 
 foreach ($liste->get_espaces() as $espace) {
 	echo "$espace {$espace->id_espace}\n";
-	$selection->vider();
 
+
+	// Communes et départements
+	$txt = "";
+	$depts = array();
+	foreach ($espace->get_communes() as $commune) {
+		$txt .= "{$commune->nom2}, ";
+		if (!array_key_exists($commune->dept, $depts)) {
+			$depts[$dept] = sprintf("%02d",$commune->dept);
+		}
+	}
+	$txt_dept = "";
+	foreach ($depts as $dept) {
+		$txt_dept .= "$dept, ";
+	}
+	$liste->espace_enregistre_attribut($espace->id_espace,"Communes",trim($txt,', '));
+	$liste->espace_enregistre_attribut($espace->id_espace,"Dpt",trim($txt_dept,', '));
+
+	// Compte nb citations znieff
+	$selection->vider();
 	foreach ($tables_recherche as $table_recherche) {
 		$extraction = new bobs_extractions($db);
 		$extraction->ajouter_condition(new bobs_ext_c_espece_det_znieff());
@@ -41,5 +59,5 @@ foreach ($liste->get_espaces() as $espace) {
 	}
 	$n = $selection->n();
 	echo "\tenregistre $n\n";
-	$liste->espace_enregistre_attribut($espace->id_espace,"habitats",$n);
+	$liste->espace_enregistre_attribut($espace->id_espace,"ZNIEFF",$n);
 }
