@@ -22,7 +22,7 @@ $selection = new bobs_selection($db, SELECTION);
 $conditions_de_base = array(
 	new bobs_ext_c_indice_qualite(array(3,4)),
 	new bobs_ext_c_pas_prosp_neg(),
-	//new bobs_ext_c_sans_tag_invalide()
+	new bobs_ext_c_interval_date('30/06/2003','30/06/2013')
 );
 
 function enlever_invalides($selection) {
