@@ -92,9 +92,10 @@ foreach ($seuils_orig as $indice => $seuil) {
 	$seuils_ponder[$indice][1] = $Rr+$P-($Rr*$P/100);
 }
 
+echo("Espece,Mailles_OQP,Rr,Indice\n");  //entête CSV
 // Evaluer chaque espèce
 foreach ($selection->especes()  as $espece) {
-	echo "$espece";
+	echo "$espece,";
 	flush();
 	$mailles = array();
 	foreach ($selection->get_citations() as $citation) {
@@ -108,13 +109,13 @@ foreach ($selection->especes()  as $espece) {
 		}
 	}
 	$n_mailles = count($mailles);
-	echo " occupe $n_mailles";
+	echo "$n_mailles,";
 	$Rr_esp = 100 - 100 * ($n_mailles/$C);
-	echo " Rr_esp = $Rr_esp ";
+	echo "$Rr_esp,";
 
 	foreach ($seuils_ponder as $seuil => $vals) {
 		if ($Rr_esp >= $vals[0] && $Rr_esp < $vals[1]) {
-			echo " indice = $seuil";
+			echo "$seuil";
 			break;
 		}
 	}
