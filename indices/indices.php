@@ -58,11 +58,34 @@ foreach ($occupation_des_mailles as $m => $n) {
 $total = count($occupation_des_mailles);
 echo "Nombre de carrés prospectés : $nombre_carres_prosp avec seuil = $nb_citations_min ($total avec seuil = 1)\n";
 
+
+// Déterminer l'emprise de l'extraction (C)
+$depts = array();
+$extraction = bobs_extractions::charge_xml($db, $selection->extraction_xml);
+foreach ($extraction->conditions as $condition) {
+	echo $condition."\n";
+	if (get_class($condition) == 'bobs_ext_c_departement') {
+		$depts[] = $condition->id_espace;
+	}
+}
+$in = '';
+foreach ($depts as $dept) {
+	$in .= $dept.',';
+}
+$in = trim($in, ',');
+$sql_carres_couverture = "select count(*) from clicnat_carre_atlas($proj_maille,$dim_maille,(select st_union(the_geom) from espace_departement where id_espace in ($in))) as t";
+
+$q = bobs_qm()->query($db,'carres', $sql_carres_couverture, array());
+$r = bobs_element::fetch($q);
+$C = $r['count'];
+
+echo "$C nombre de carrés total de l'extraction\n";
+
 // calculs des nouveaux seuils
 $seuils_ponder = array();
 foreach ($seuils_orig as $indice => $seuil) {
 	$Rr = $seuil[0];
-	$P = $nombre_carres_prosp;
+	$P = 100*($C-$nombre_carres_prosp)/$C;
 	$seuils_ponder[$indice] = array();
 	$seuils_ponder[$indice][0] = $Rr+$P-($Rr*$P/100);
 	$Rr = $seuil[1];
@@ -85,8 +108,16 @@ foreach ($selection->especes()  as $espece) {
 		}
 	}
 	$n_mailles = count($mailles);
-	echo " occupe $n_mailles\n";
+	echo " occupe $n_mailles";
+	$Rr_esp = 100 - 100 * ($n_mailles/$C);
+	echo " Rr_esp = $Rr_esp ";
+
+	foreach ($seuils_ponder as $seuil => $vals) {
+		if ($Rr_esp >= $vals[0] && $Rr_esp < $vals[1]) {
+			echo " indice = $seuil";
+			break;
+		}
+	}
+	echo "\n";
 }
-
-
 ?>
