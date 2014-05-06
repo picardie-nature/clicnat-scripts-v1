@@ -48,9 +48,14 @@ foreach (bobs_espece::get_classes() as $classe) {
 	foreach (bobs_espece::get_liste_par_classe($db, $classe) as $espece) {
 		$rr = $espece->get_referentiel_regional();
 		$cd_ref = null;
-		if ($espece->taxref_inpn_especes) {
-			$inpn = new bobs_espece_inpn($db, $espece->taxref_inpn_especes);
-			$cd_ref = $inpn->cd_ref;
+		if (!empty($espece->taxref_inpn_especes)) {
+			try  {
+				$inpn = new bobs_espece_inpn($db, $espece->taxref_inpn_especes);
+				$cd_ref = $inpn->cd_ref;
+			} catch (Exception $e) {
+				echo "Pas trouvé taxref:{$espece->taxref_inpn_especes}\n";
+				$cd_ref = null;
+			}
 		}
 		$data_esp = array(
 			"id_espece" => $espece->id_espece,
@@ -104,7 +109,7 @@ foreach ($departements as $dept) {
 			if ($e->get_restitution_ok(bobs_espece::restitution_public))
 				$data['especes'][] = $e->id_espece;
 		}
-		$result = envoi($url_client, $data);
+		$result = envoi(URL_CLIENT, $data);
 
 		if (test_retour($result)) echo "ok\n";
 		else echo "ERREUR\n";
