@@ -36,7 +36,7 @@ const sql_create_esp = 'create table if not exists clicnat_espece_imp  (
 	nom_s varchar(200),
 	ordre varchar(100),
 	famille varchar(100),
-	cd_nom integer,
+	cd_nom integer unique,
 	menace text,
 	habitat text,
 	action_conservation text,
