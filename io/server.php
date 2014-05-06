@@ -106,8 +106,9 @@ foreach ($departements as $dept) {
 			'especes' => array()
 		);
 		foreach ($especes as $e) {
-			if ($e->get_restitution_ok(bobs_espece::restitution_public))
-				$data['especes'][] = $e->id_espece;
+			if ($e->get_restitution_ok(bobs_espece::restitution_public)) {
+				$data['especes'][] = array('id_espece' => $e->id_espece, 'derniere_annee' => $commune->get_derniere_annee_obs($e->id_espece));
+			}
 		}
 		$result = envoi(URL_CLIENT, $data);
 

@@ -24,8 +24,8 @@ if (file_exists('../fonctions/connectcn.php')) {
 	$mysql_database = 'dreal_io';
 }
 
-const sql_create_ce = 'create table if not exists clicnat_commune_espece_imp (code_insee char(5), id_espece integer, primary key(code_insee,id_espece)) character set utf8';
-const sql_insert_commune = 'insert into clicnat_commune_espece_imp (code_insee, id_espece) values (:code_insee, :id_espece)';
+const sql_create_ce = 'create table if not exists clicnat_commune_espece_imp (code_insee char(5), id_espece integer, derniere_annee_obs integer, primary key(code_insee,id_espece),key(derniere_annee_obs)) character set utf8';
+const sql_insert_commune = 'insert into clicnat_commune_espece_imp (code_insee, id_espece, derniere_annee_obs) values (:code_insee, :id_espece, :derniere_annee)';
 const sql_commune_commit1 = 'drop table if exists clicnat_commune_espece';
 const sql_commune_commit2 = 'alter table clicnat_commune_espece_imp rename to clicnat_commune_espece';
 
@@ -165,7 +165,8 @@ try {
 			$req_insert = $db->prepare(sql_insert_commune);
 			foreach ($obj->especes as $espece) {
 				$req_insert->bindParam(':code_insee', $obj->commune);
-				$req_insert->bindParam(':id_espece', $espece);
+				$req_insert->bindParam(':id_espece', $espece->id_espece);
+				$req_insert->bindParam(':derniere_annee', $espece->derniere_annee);
 				if (!$req_insert->execute()) {
 					echo "ERREUR_DB_COM_Q2\n";
 					exit(1);
