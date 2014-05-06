@@ -87,9 +87,6 @@ flush();
 $data = array('contenu' => 'especes_commit');
 echo envoi(URL_CLIENT, $data);
 
-//todo terminer la partie liste espèces/commune qui utilise pas les commits...
-exit();
-
 foreach ($departements as $dept) {
 	$communes = bobs_espace_commune::liste_pour_departement($db, $dept);
 	foreach ($communes as $commune) {
@@ -112,5 +109,7 @@ foreach ($departements as $dept) {
 		if (test_retour($result)) echo "ok\n";
 		else echo "ERREUR\n";
 	}
+	$data = array('contenu' => 'commune_commit');
+	echo envoi(URL_CLIENT, $data);
 }
 ?>
