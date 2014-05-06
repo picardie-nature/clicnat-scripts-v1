@@ -76,7 +76,8 @@ const sql_insert_espece = 'insert into clicnat_espece_imp (
 	ref_menace,
 	ref_statut_bio,
 	ref_statut_origine,
-	ref_niveau_connaissance
+	ref_niveau_connaissance,
+	cd_ref
 ) values (
 	:id_espece,
 	:classe,
@@ -97,7 +98,8 @@ const sql_insert_espece = 'insert into clicnat_espece_imp (
 	:ref_indice_menace,
 	:ref_statut_bio,
 	:ref_statut_origine,
-	:ref_niveau_connaissance
+	:ref_niveau_connaissance,
+	:cd_ref
 )';
 
 function msg_exception_pdo($ex) {
@@ -142,6 +144,7 @@ try {
 				$req_insert->bindParam(':ref_niveau_connaissance', $e->ref_niveau_connaissance);
 				$req_insert->bindParam(':ordre', $e->ordre);
 				$req_insert->bindParam(':famille', $e->famille);
+				$req_insert->bindParam(':cd_ref', $e->cd_ref);
 
 				if (!$req_insert->execute()) {
 					echo "ERREUR_DB_ESP_Q2\n";
