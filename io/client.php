@@ -50,6 +50,7 @@ const sql_create_esp = 'create table if not exists clicnat_espece_imp  (
 	ref_statut_bio varchar(21),
 	ref_statut_origine varchar(34),
 	ref_niveau_connaissance varchar(24),
+	cd_ref integer,
 	primary key (id_espece)
 ) character set utf8';
 

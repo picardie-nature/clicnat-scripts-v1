@@ -47,6 +47,11 @@ foreach (bobs_espece::get_classes() as $classe) {
 	);
 	foreach (bobs_espece::get_liste_par_classe($db, $classe) as $espece) {
 		$rr = $espece->get_referentiel_regional();
+		$cd_ref = null;
+		if ($espece->taxref_inpn_especes) {
+			$inpn = new bobs_espece_inpn($db, $espece->taxref_inpn_especes);
+			$cd_ref = $inpn->cd_ref;
+		}
 		$data_esp = array(
 			"id_espece" => $espece->id_espece,
 			"nom_f" => $espece->nom_f,
@@ -54,6 +59,7 @@ foreach (bobs_espece::get_classes() as $classe) {
 			"ordre" => $espece->ordre,
 			"famille" => $espece->famille,
 			"cd_nom" => $espece->taxref_inpn_especes,
+			"cd_ref" => $cd_ref,
 			"determinant_znieff" => $espece->determinant_znieff,
 			"commentaire_statut_menace" => $espece->commentaire_statut_menace,
 			"commentaire_repartition" => $espece->commentaire,
