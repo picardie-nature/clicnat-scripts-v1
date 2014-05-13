@@ -115,7 +115,7 @@ foreach ($departements as $dept) {
 		if (test_retour($result)) echo "ok\n";
 		else echo "ERREUR\n";
 	}
-	$data = array('contenu' => 'commune_commit');
-	echo envoi(URL_CLIENT, $data);
 }
+$data = array('contenu' => 'commune_commit');
+echo envoi(URL_CLIENT, $data);
 ?>
