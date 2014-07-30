@@ -9,33 +9,6 @@ require_once(OBS_DIR.'extractions.php');
 require_once(OBS_DIR.'extractions-conditions.php');
 require_once(OBS_DIR.'utilisateur.php');
 
-function categories_presentes($especes) {
-	$categories = array(
-		'Guêpiers, rolliers',
-		'Coucous, pigeons, tourterelles',
-		'Rapaces diurnes',
-		'Faisans, perdrix, râles',
-		'Oiseaux d\'eau',
-		'Passereaux',
-		'Grands échassiers',
-		'Pics',
-		'Martinets',
-		'Engoulevents',
-		'Petits échassiers (limicoles), mouettes, goélands...',
-		'Perroquets',
-		'Rapaces nocturnes'
-	);
-	foreach ($especes as $id_espece) {
-		$classe_o = new bobs_classe($db, 'O');
-		$espece = get_espece($db, $id_espece);
-		switch ($espece->classe) {
-			case 'O':
-				
-				
-		}
-	}
-}
-
 get_db($db);
 
 define("LISTE_ESPACE", 219);
