@@ -14,7 +14,7 @@ get_db($db);
 define("LISTE_ESPACE", 219);
 define("TAMPON", 200);
 
-$tables_recherche = array('espace_point', 'espace_chiro', 'espace_line', 'espace_polygon');
+$tables_recherche = array('espace_point', 'espace_line', 'espace_polygon');
 $id_tag_invalide = get_config()->query_nv('/clicnat/validation/id_tag_invalide');
 
 $conditions_de_base = array(
@@ -27,7 +27,7 @@ $conditions_de_base = array(
 $liste = new clicnat_listes_espaces($db, LISTE_ESPACE);
 
 function classement_liste_espece($db, $liste) {
-	$l_categories = array(
+	$l_categories = [
 		// oiseaux
 		'Guêpiers, rolliers',
 		'Coucous, pigeons, tourterelles',
@@ -50,8 +50,23 @@ function classement_liste_espece($db, $liste) {
 		'Lagomorphes',
 		'Ongulés',
 		'Pinnipèdes',
-		'Rongeurs'
-	);
+		'Rongeurs',
+		// amphibiens
+		'Amphibiens',
+		// insectectes
+		'Coccinelles',
+		'Papillons',
+		'Libellules',
+		'Criquets, Sauterelles',
+		'Grillons',
+		// poissons
+		'Poissons',
+		// mollusques
+		'Mollusques',
+		'Reptiles',
+		'Araignées',
+		'Crustacés'
+	];
 	$categories = array();
 	foreach ($l_categories as $c) {
 		$categories[$c] = 0;
@@ -72,6 +87,44 @@ function classement_liste_espece($db, $liste) {
 			case 'M': // les mammifères
 				$k = $espece->ordre;
 				break;
+			case 'B': // les amphibiens
+				$k = 'Amphibiens';
+				break;
+			case 'I': //
+				if ($espece->famille == 'Coccinellidae') {
+					$k = 'Coccinelles';
+					break;
+				}
+				if ($espece->ordre == 'Lepidoptera' or $espece->ordre == 'Lépidoptères') {
+					$k = 'Papillons';
+					break;
+				}
+				if ($espece->ordre == 'Odonates' or $espece->ordre == 'Odonata') {
+					$k = 'Libellules';
+					break;
+				}
+				if ($espece->ordre == 'Orthoptères' or $espece->ordre == 'Orthoptera') {
+					$k = 'Criquets, Sauterelles';
+					break;
+				}
+				break;
+			case 'P':
+				$k = 'Poissons';
+				break;
+			case 'L':
+			case 'G':
+				$k = 'Mollusques';
+				break;
+			case 'R':
+				$k = 'Reptiles';
+				break;
+			case 'A':
+				$k = 'Araignées';
+				break;
+			case 'C':
+				$k = 'Crustacés';
+				break;
+					
 		}
 		if ($k && isset($categories[$k]))
 			$categories[$k]++;
