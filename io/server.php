@@ -47,6 +47,16 @@ foreach (bobs_espece::get_classes() as $classe) {
 	);
 	foreach (bobs_espece::get_liste_par_classe($db, $classe) as $espece) {
 		$rr = $espece->get_referentiel_regional();
+		$cd_ref = null;
+		if (!empty($espece->taxref_inpn_especes)) {
+			try  {
+				$inpn = new bobs_espece_inpn($db, $espece->taxref_inpn_especes);
+				$cd_ref = $inpn->cd_ref;
+			} catch (Exception $e) {
+				echo "Pas trouvé taxref:{$espece->taxref_inpn_especes}\n";
+				$cd_ref = null;
+			}
+		}
 		$data_esp = array(
 			"id_espece" => $espece->id_espece,
 			"nom_f" => $espece->nom_f,
@@ -54,6 +64,7 @@ foreach (bobs_espece::get_classes() as $classe) {
 			"ordre" => $espece->ordre,
 			"famille" => $espece->famille,
 			"cd_nom" => $espece->taxref_inpn_especes,
+			"cd_ref" => $cd_ref,
 			"determinant_znieff" => $espece->determinant_znieff,
 			"commentaire_statut_menace" => $espece->commentaire_statut_menace,
 			"commentaire_repartition" => $espece->commentaire,
@@ -81,9 +92,6 @@ flush();
 $data = array('contenu' => 'especes_commit');
 echo envoi(URL_CLIENT, $data);
 
-//todo terminer la partie liste espèces/commune qui utilise pas les commits...
-exit();
-
 foreach ($departements as $dept) {
 	$communes = bobs_espace_commune::liste_pour_departement($db, $dept);
 	foreach ($communes as $commune) {
@@ -98,13 +106,16 @@ foreach ($departements as $dept) {
 			'especes' => array()
 		);
 		foreach ($especes as $e) {
-			if ($e->get_restitution_ok(bobs_espece::restitution_public))
-				$data['especes'][] = $e->id_espece;
+			if ($e->get_restitution_ok(bobs_espece::restitution_public)) {
+				$data['especes'][] = array('id_espece' => $e->id_espece, 'derniere_annee' => $commune->get_derniere_annee_obs($e->id_espece));
+			}
 		}
-		$result = envoi($url_client, $data);
+		$result = envoi(URL_CLIENT, $data);
 
 		if (test_retour($result)) echo "ok\n";
 		else echo "ERREUR\n";
 	}
 }
+$data = array('contenu' => 'commune_commit');
+echo envoi(URL_CLIENT, $data);
 ?>

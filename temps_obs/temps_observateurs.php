@@ -3,7 +3,7 @@
  * Évalue le temps passé par les observateurs sur le site à partir du fichier de log
  */
 
-$annee = 2013;
+$annee = 2014;
 $dir_analyse = '/tmp/analyse';
 
 class bobs_evenement {
@@ -57,7 +57,7 @@ class bobs_historique {
 $h = new bobs_historique('bobs.log');
 while (($e = $h->suivant())) {
 	if ($e->annee != $annee) {
-		echo "année $e != $annee\n";
+		echo "année {$e->annee} != $annee\n";
 		break;
 	}
 

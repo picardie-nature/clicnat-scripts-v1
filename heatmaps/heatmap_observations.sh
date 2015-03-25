@@ -10,15 +10,16 @@ fi
 
 export PYTHONPATH=$PWD/osmviz/src/
 
-if [[ -f points ]]; then rm points; fi;
-
 if [[ ! -f points ]]; then
-        echo "copy (select st_y(espace_point.the_geom) as y, st_x(espace_point.the_geom) as x from observations,espace_point,espace_departement where st_intersects(espace_point.the_geom,espace_point.the_geom) and espace_departement.reference in ('02','60','80') and date_observation>='2013-01-01' and observations.id_espace=espace_point.id_espace) to stdout;"|psql -h sgc clicnat pn > points
-        echo "copy (select st_y(espace_chiro.the_geom) as y, st_x(espace_chiro.the_geom) as x from observations,espace_chiro,espace_departement where st_intersects(espace_chiro.the_geom,espace_chiro.the_geom) and espace_departement.reference in ('02','60','80') and date_observation>='2013-01-01' and observations.id_espace=espace_chiro.id_espace) to stdout;"|psql -h sgc clicnat pn >> points
+	where="observations.id_observation between 404973 and 505913"
+        echo "copy (select st_y(espace_point.the_geom) as y, st_x(espace_point.the_geom) as x from observations,espace_point,espace_departement where st_intersects(espace_point.the_geom,espace_departement.the_geom) and espace_departement.reference in ('02','60','80') and $where and observations.id_espace=espace_point.id_espace) to stdout;"|psql -h sgc clicnat pn > points
+        echo "copy (select st_y(espace_chiro.the_geom) as y, st_x(espace_chiro.the_geom) as x from observations,espace_chiro,espace_departement where st_intersects(espace_chiro.the_geom,espace_departement.the_geom) and espace_departement.reference in ('02','60','80') and $where and observations.id_espace=espace_chiro.id_espace) to stdout;"|psql -h sgc clicnat pn >> points
+	cat points|sort -u > points_tmp
+	rm points; mv points_tmp points
+else
+	echo "Conserve le fichier de points déjà existant"
 fi
 
-cat points|sort -u > points_tmp
-rm points; mv points_tmp points
 
 fsortie=$(date +"observations_%Y%m%d.png")
 
