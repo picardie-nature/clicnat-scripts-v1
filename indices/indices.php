@@ -3,9 +3,8 @@ if (file_exists('config.php'))
 	require_once('config.php');
 else
 	require_once('/etc/baseobs/config.php');
-
+echo "init\n";
 require_once(DB_INC_PHP);
-
 require_once(OBS_DIR.'espece.php');
 require_once(OBS_DIR.'selection.php');
 require_once(OBS_DIR.'utilisateur.php');
@@ -21,23 +20,30 @@ $seuils_orig = array(
 	'EX' => array(99.5,100,'EX')
 );
 
-if (count($argv) != 3) {
-	echo "Usage: php indice.php id_selection nb_citations_min";
+if (count($argv) != 5) {
+	echo "Usage: php indice.php id_selection nb_citations_min dim_maille fichier_csv";
 	exit(1);
 }
 
 $id_selection = $argv[1]; // numéro de la sélection qui contient les données
 $nb_citations_min = $argv[2]; // nombre de citations requis pour compter une maille prospectée
-$dim_maille = 5000;
+$dim_maille = $argv[3];
 $proj_maille = 2154;
-
 get_db($db);
 
 $selection = new bobs_selection($db, $id_selection);
+
 echo "Sélection : {$selection} #{$selection->id_selection}\n";
 // Compter le nombre de mailles avec nb_citations_min
 $occupation_des_mailles = array();
+echo "Compte le nombre de mailles\n";
+
+$n = 0;
+$ntotal = $selection->n();
 foreach ($selection->get_citations() as $citation) {
+	$n++;
+	echo "\r$n/$ntotal citations";
+	flush();
 	$observation = $citation->get_observation();
 	$mailles = $observation->get_espace()->get_index_atlas_repartition($proj_maille, $dim_maille);
 	foreach ($mailles as $m) {
@@ -48,7 +54,7 @@ foreach ($selection->get_citations() as $citation) {
 			$occupation_des_mailles[$k] = 1;
 	}
 }
-
+$csv = fopen($argv[4],"w");
 $nombre_carres_prosp = 0;
 foreach ($occupation_des_mailles as $m => $n) {
 	if ($n >= $nb_citations_min) {
@@ -56,14 +62,14 @@ foreach ($occupation_des_mailles as $m => $n) {
 	}
 }
 $total = count($occupation_des_mailles);
-echo "Nombre de carrés prospectés : $nombre_carres_prosp avec seuil = $nb_citations_min ($total avec seuil = 1)\n";
+fwrite($csv, "Nombre de carrés prospectés : $nombre_carres_prosp avec seuil = $nb_citations_min ($total avec seuil = 1)\n");
 
 
 // Déterminer l'emprise de l'extraction (C)
 $depts = array();
 $extraction = bobs_extractions::charge_xml($db, $selection->extraction_xml);
 foreach ($extraction->conditions as $condition) {
-	echo $condition."\n";
+	fwrite($csv, $condition."\n");
 	if (get_class($condition) == 'bobs_ext_c_departement') {
 		$depts[] = $condition->id_espace;
 	}
@@ -79,7 +85,10 @@ $q = bobs_qm()->query($db,'carres', $sql_carres_couverture, array());
 $r = bobs_element::fetch($q);
 $C = $r['count'];
 
-echo "$C nombre de carrés total de l'extraction\n";
+$taux=$nombre_carres_prosp/$C;
+fwrite($csv, "$C nombre de carrés total de l'extraction. ");
+
+fwrite($csv, "Taux de prospection : $taux\n");
 
 // calculs des nouveaux seuils
 $seuils_ponder = array();
@@ -90,13 +99,18 @@ foreach ($seuils_orig as $indice => $seuil) {
 	$seuils_ponder[$indice][0] = $Rr+$P-($Rr*$P/100);
 	$Rr = $seuil[1];
 	$seuils_ponder[$indice][1] = $Rr+$P-($Rr*$P/100);
+
+	fwrite($csv, $seuils_ponder[$indice][0].",$indice,".$seuils_ponder[$indice][1]."\n");	
+	
 }
 
-echo("Espece,Mailles_OQP,Rr,Indice\n");  //entête CSV
+fwrite($csv,"ID,Nom_f,Nom_s,Mailles_OQP,Rr,RRpond,Indice\n");  //entête CSV
 // Evaluer chaque espèce
 foreach ($selection->especes()  as $espece) {
-	echo "$espece,";
-	flush();
+	echo "termine $espece\n";
+	fwrite($csv, "$espece->id_espece,");
+	fwrite($csv, str_replace(",","",$espece->nom_f).","); //pour virer les , dans les noms d'especes
+	fwrite($csv, str_replace(",","",$espece->nom_s).",");
 	$mailles = array();
 	foreach ($selection->get_citations() as $citation) {
 		if ($citation->id_espece != $espece->id_espece) 
@@ -109,16 +123,18 @@ foreach ($selection->especes()  as $espece) {
 		}
 	}
 	$n_mailles = count($mailles);
-	echo "$n_mailles,";
+	fwrite($csv, "$n_mailles,");
 	$Rr_esp = 100 - 100 * ($n_mailles/$C);
-	echo "$Rr_esp,";
+	$Rr_espPond = $Rr_esp-($P-($Rr_esp*$P/100)); //Pour comparaison entre différent lots de données
+	fwrite($csv, "$Rr_esp,");
+	fwrite($csv, "$Rr_espPond,");
 
 	foreach ($seuils_ponder as $seuil => $vals) {
 		if ($Rr_esp >= $vals[0] && $Rr_esp < $vals[1]) {
-			echo "$seuil";
+			fwrite($csv,"$seuil");
 			break;
 		}
 	}
-	echo "\n";
+	fwrite($csv, "\n");
 }
 ?>
