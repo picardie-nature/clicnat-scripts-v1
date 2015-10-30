@@ -12,9 +12,10 @@ require_once(OBS_DIR.'espece.php');
 require_once(OBS_DIR.'utilisateur.php');
 require_once(OBS_DIR.'espace.php');
 require_once(OBS_DIR.'liste_espace.php');
+require_once(OBS_DIR.'reseau.php');
 
 get_db($db);
-$annee_deb = 2009;
+$annee_deb = 2008;
 $annee_fin = strftime("%Y");
 
 if (!defined('PROMONTOIRE2_ID_LISTE_CARTO_CHIROS'))
