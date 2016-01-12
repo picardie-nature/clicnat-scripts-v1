@@ -28,8 +28,8 @@ if (!defined('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM'))
 $liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_UMAM);
 
 $attrs = [
-	"occurrences" => [
-		"name" => "occurrences",
+	"occurences" => [
+		"name" => "occurences",
 		"type" => "int"
 	],
 	"species" => [
@@ -80,6 +80,7 @@ $extraction->ajouter_condition(new bobs_ext_c_liste_especes(PROMONTOIRE2_ID_LIST
 $extraction->ajouter_condition(new bobs_ext_c_indice_qualite(array('3','4')));
 $extraction->ajouter_condition(new bobs_ext_c_sans_tag_invalide());
 $extraction->ajouter_condition(new bobs_ext_c_pas_prosp_neg());
+$extraction->ajouter_condition(new bobs_ext_c_interval_date("01/01/2010","31/12/2020"));
 
 $selection = new bobs_selection($db,PROMONTOIRE2_ID_SELECTION_CARTO_UMAM);
 $selection->vider();
