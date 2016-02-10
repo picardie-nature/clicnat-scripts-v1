@@ -32,6 +32,7 @@ python heatmap/heatmap.py \
         -p points \
          --osm \
         --zoom 9 \
+	-r 14 \
         -o $fsortie\
         -d 0.6 \
         -m "10088ff10" \
