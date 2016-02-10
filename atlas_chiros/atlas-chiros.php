@@ -84,9 +84,10 @@ $srid = 2154;
 $reseau = 'cs';
 $extraction = new bobs_extractions($db);
 $extraction->ajouter_condition(new bobs_ext_c_reseau(get_bobs_reseau($db, $reseau)));
-$extraction->ajouter_condition(new bobs_ext_c_indice_qualite(array('3','4')));
+$extraction->ajouter_condition(new bobs_ext_c_indice_qualite(['3','4']));
 $extraction->ajouter_condition(new bobs_ext_c_sans_tag_invalide());
 $extraction->ajouter_condition(new bobs_ext_c_pas_prosp_neg());
+$extraction->ajouter_condition(new bobs_ext_c_interval_date("01/01/$annee_deb","31/12/$annee_fin"));
 
 $selection = new bobs_selection($db, PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
 $selection->vider();
