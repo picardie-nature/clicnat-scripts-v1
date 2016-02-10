@@ -91,7 +91,7 @@ foreach ($n_carres as $c) {
 	$nom = sprintf("E%04dN%04d", ($c['x0']*$pas)/1000, ($c['y0']*$pas)/1000);
 	echo "$nom {$c['count_citation']} {$c['count_especes']}\n";
 	if (isset($index_c[$nom])) {
-		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences", $c['count_citation']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "occurences", $c['count_citation']);
 		$liste->espace_enregistre_attribut($index_c[$nom], "species", $c['count_especes']);
 	} else {
 		bobs_log("cartes atlas-nat. : carré $nom pas dans la liste");
