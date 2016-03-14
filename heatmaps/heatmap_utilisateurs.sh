@@ -27,6 +27,7 @@ python heatmap/heatmap.py \
         --zoom 9 \
         -o $fsortie\
         -d 0.6 \
+	-r 14\
         -m "10088ff10" \
         -M "000ffffff" \
         --osm_base "http://gpic.web-fr.org/mapproxy/wmts/basemaps_google/GLOBAL_MERCATOR/"
