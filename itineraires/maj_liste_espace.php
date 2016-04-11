@@ -69,7 +69,8 @@ function classement_liste_espece($db, $liste) {
 	];
 	$categories = array();
 	foreach ($l_categories as $c) {
-		$categories[$c] = 0;
+		$categories[$c]['n_citations'] = 0;
+		$categories[$c]['n_taxons'] = 0;
 	}
 	
 	$classe_o = new bobs_classe($db, 'O');
@@ -77,7 +78,9 @@ function classement_liste_espece($db, $liste) {
 	foreach ($classe_o->liste_especes_nom_simple() as $o) {
 		$oiseaux[$o['id_espece']] = $o;
 	}
-	foreach ($liste as $id_espece) {
+	foreach ($liste as $e) {
+		$id_espece = $e['id_espece'];
+		$n_citations = $e['n_citations'];
 		$espece = get_espece($db, $id_espece);
 		$k = false;
 		switch ($espece->classe) {
@@ -126,9 +129,13 @@ function classement_liste_espece($db, $liste) {
 				break;
 					
 		}
-		if ($k && isset($categories[$k]))
-			$categories[$k]++;
-
+		if ($k) {
+			$categories[$k]['n_taxons'] += 1;
+			$categories[$k]['n_citations'] += $n_citations;
+			$of = fopen('/tmp/liste_categories.csv','a');
+			fwrite($of, "{$k};{$id_espece}\n");
+			fclose($of);
+		}
 	}
 	return $categories;
 }
@@ -166,16 +173,34 @@ foreach ($liste->get_espaces() as $espace) {
 	$especes_3y = array();
 	foreach ($especes as $id_espece=>$espece) {
 		if (count($espece['annees']) >= 3)
-			$especes_3y[] = $id_espece;
+			$especes_3y[] = ["id_espece" => $id_espece, "n_citations" => $espece['total']];
 	}
+	
+	$attrs = $liste->attributs();
+	$attrs_ks = array_column($attrs, 'name');
+
+	if (array_search('n_citations', $attrs_ks) === false) 
+		$liste->attributs_def_ajout_champ('n_citations', 'int', null);
+	if (array_search('n_especes', $attrs_ks) === false) 
+		$liste->attributs_def_ajout_champ('n_especes', 'int', null);
+	if (array_search('n_especes_3y', $attrs_ks) === false) 
+		$liste->attributs_def_ajout_champ('n_especes_3y', 'int', null);
 
 	$liste->espace_enregistre_attribut($espace->id_espace, "n_citations", $n_citations);
 	$liste->espace_enregistre_attribut($espace->id_espace, "n_especes", count($especes));
 	$liste->espace_enregistre_attribut($espace->id_espace, "n_especes_3y", count($especes_3y));
 
 	$cl = classement_liste_espece($db, $especes_3y);
-	foreach ($cl as $k => $n) {
-		$liste->espace_enregistre_attribut($espace->id_espace, $k, $n);
+
+	foreach ($cl as $k => $d) {
+		if (array_search($k, $attrs_ks) === false) 
+			$liste->attributs_def_ajout_champ($k, 'int', null);
+
+		if (array_search("{$k}_n_citations", $attrs_ks) === false) 
+			$liste->attributs_def_ajout_champ("{$k}_n_citations", 'int', null);
+
+		$liste->espace_enregistre_attribut($espace->id_espace, $k, $d['n_taxons']);
+		$liste->espace_enregistre_attribut($espace->id_espace, "{$k}_n_citations", $d['n_citations']);
 	}
 
 }

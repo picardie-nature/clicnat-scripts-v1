@@ -18,31 +18,32 @@ get_db($db);
 $annee_deb = 2008;
 $annee_fin = strftime("%Y");
 
-if (!defined('PROMONTOIRE2_ID_LISTE_CARTO_CHIROS'))
-	define('PROMONTOIRE2_ID_LISTE_CARTO_CHIROS',228);
-if (!defined('PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS'))
-	define('PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS', 15580);
+if (!defined('PROMONTOIRE2_ID_LISTE_CARTO_UMAM'))
+	define('PROMONTOIRE2_ID_LISTE_CARTO_UMAM',366);
+if (!defined('PROMONTOIRE2_ID_LISTE_ESP_UMAM'))
+	define('PROMONTOIRE2_ID_LISTE_ESP_UMAM', 514);
+if (!defined('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM'))
+	define('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM', 20543);
 
-$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_CHIROS);
+$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_UMAM);
 
-$attrs = array();
 $attrs = [
-	"occurrences_wintering" => [
-		"name" => "occurrences_wintering",
+	"occurences" => [
+		"name" => "occurences",
 		"type" => "int"
 	],
-	"occurrences_summering" => [
-		"name" => "occurrences_summering",
+	"species" => [
+		"name" => "species",
 		"type" => "int"
 	],
-	"species_wintering" => [
-		"name" => "species_wintering",
+	"occurrences_mt" => [
+		"name" => "occurrences_mt",
 		"type" => "int"
 	],
-	"species_summering" => [
-		"name" => "species_summering",
+	"species_mt" => [
+		"name" => "species_mt",
 		"type" => "int"
-	]
+	],
 ];
 
 /* vérification et création de champs */
@@ -62,7 +63,7 @@ foreach ($attrs as $attr) {
 }
 
 unset($liste);
-$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_CHIROS);
+$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_UMAM);
 $carres = $liste->get_espaces();
 if ($carres->count() == 0) {
 	$q = bobs_qm()->query($db, "ins_atlas_55","select distinct espace_l93_5x5.id_espace from espace_l93_5x5, espace_departement where st_intersects(espace_departement.the_geom, espace_l93_5x5.the_geom) and espace_departement.nom in ('AISNE','OISE','SOMME')",array());
@@ -72,7 +73,7 @@ if ($carres->count() == 0) {
 }
 
 
-$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_CHIROS);
+$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_UMAM);
 $carres = $liste->get_espaces();
 $index_c = array();
 foreach ($carres as $c) {
@@ -81,55 +82,50 @@ foreach ($carres as $c) {
 
 $pas = 5000;
 $srid = 2154;
-$reseau = 'cs';
+
 $extraction = new bobs_extractions($db);
-$extraction->ajouter_condition(new bobs_ext_c_reseau(get_bobs_reseau($db, $reseau)));
+$extraction->ajouter_condition(new bobs_ext_c_liste_especes(PROMONTOIRE2_ID_LISTE_ESP_UMAM));
 $extraction->ajouter_condition(new bobs_ext_c_indice_qualite(array('3','4')));
 $extraction->ajouter_condition(new bobs_ext_c_sans_tag_invalide());
 $extraction->ajouter_condition(new bobs_ext_c_pas_prosp_neg());
+$extraction->ajouter_condition(new bobs_ext_c_interval_date("01/01/2010","31/12/2020"));
 
-$selection = new bobs_selection($db, PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
+$selection = new bobs_selection($db,PROMONTOIRE2_ID_SELECTION_CARTO_UMAM);
 $selection->vider();
-
-// estivage
-$extraction->dans_selection(PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
-$selection = new bobs_selection($db, PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
-$as = new bobs_selection_enlever_ou_conserver_que_hivernage($db);
-$as->set('id_selection', $selection->id_selection);
-$as->set('enlever', true);
-$as->prepare();
-$as->execute();
+$extraction->dans_selection($selection->id_selection);
 
 $n_carres = $selection->carres_nespeces_ncitations($pas,$srid);
 foreach ($n_carres as $c) {
 	$nom = sprintf("E%04dN%04d", ($c['x0']*$pas)/1000, ($c['y0']*$pas)/1000);
 	echo "$nom {$c['count_citation']} {$c['count_especes']}\n";
 	if (isset($index_c[$nom])) {
-		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences_summering", $c['count_citation']);
-		$liste->espace_enregistre_attribut($index_c[$nom], "species_summering", $c['count_especes']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences", $c['count_citation']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "species", $c['count_especes']);
 	} else {
 		bobs_log("cartes atlas-nat. : carré $nom pas dans la liste");
 	}
 }
 
+echo "Passe aux mammifères terrestre";
 
-// hivernage
+$extraction = new bobs_extractions($db);
+$extraction->ajouter_condition(new bobs_ext_c_reseau(new clicnat2_reseau($db, 'mt')));
+$extraction->ajouter_condition(new bobs_ext_c_indice_qualite(array('3','4')));
+$extraction->ajouter_condition(new bobs_ext_c_sans_tag_invalide());
+$extraction->ajouter_condition(new bobs_ext_c_pas_prosp_neg());
+$extraction->ajouter_condition(new bobs_ext_c_interval_date("01/01/2010","31/12/2020"));
+
+$selection = new bobs_selection($db,PROMONTOIRE2_ID_SELECTION_CARTO_UMAM);
 $selection->vider();
-$extraction->dans_selection(PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
-$selection = new bobs_selection($db, PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
-$as = new bobs_selection_enlever_ou_conserver_que_hivernage($db);
-$as->set('id_selection', $selection->id_selection);
-$as->set('enlever', false);
-$as->prepare();
-$as->execute();
+$extraction->dans_selection($selection->id_selection);
 
 $n_carres = $selection->carres_nespeces_ncitations($pas,$srid);
 foreach ($n_carres as $c) {
 	$nom = sprintf("E%04dN%04d", ($c['x0']*$pas)/1000, ($c['y0']*$pas)/1000);
 	echo "$nom {$c['count_citation']} {$c['count_especes']}\n";
 	if (isset($index_c[$nom])) {
-		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences_wintering", $c['count_citation']);
-		$liste->espace_enregistre_attribut($index_c[$nom], "species_wintering", $c['count_especes']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences_mt", $c['count_citation']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "species_mt", $c['count_especes']);
 	} else {
 		bobs_log("cartes atlas-nat. : carré $nom pas dans la liste");
 	}
