@@ -1,6 +1,6 @@
 <?php
 /*
- * Mise à jour de la carto des oiseaux hivernant
+ * Mise à jour de la carto des amphibiens reptiles
  *
  */
 if (!file_exists('config.php'))
@@ -13,35 +13,32 @@ require_once(OBS_DIR.'utilisateur.php');
 require_once(OBS_DIR.'espace.php');
 require_once(OBS_DIR.'liste_espace.php');
 require_once(OBS_DIR.'reseau.php');
+require_once(OBS_DIR.'extractions-conditions.php');
 
 get_db($db);
-$annee_deb = 2008;
-$annee_fin = strftime("%Y");
 
-if (!defined('PROMONTOIRE2_ID_LISTE_CARTO_UMAM'))
-	define('PROMONTOIRE2_ID_LISTE_CARTO_UMAM',366);
-if (!defined('PROMONTOIRE2_ID_LISTE_ESP_UMAM'))
-	define('PROMONTOIRE2_ID_LISTE_ESP_UMAM', 514);
+if (!defined('PROMONTOIRE2_ID_LISTE_CARTO_AR'))
+	define('PROMONTOIRE2_ID_LISTE_CARTO_AR',232);
 if (!defined('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM'))
-	define('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM', 20543);
+	define('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM', 20332);
 
-$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_UMAM);
+$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_AR);
 
 $attrs = [
-	"occurences" => [
-		"name" => "occurences",
+	"occurrences" => [
+		"name" => "occurrences_amphib",
 		"type" => "int"
 	],
 	"species" => [
-		"name" => "species",
+		"name" => "species_amphib",
 		"type" => "int"
 	],
 	"occurrences_mt" => [
-		"name" => "occurrences_mt",
+		"name" => "occurrences_rept",
 		"type" => "int"
 	],
 	"species_mt" => [
-		"name" => "species_mt",
+		"name" => "species_rept",
 		"type" => "int"
 	],
 ];
@@ -63,7 +60,7 @@ foreach ($attrs as $attr) {
 }
 
 unset($liste);
-$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_UMAM);
+$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_AR);
 $carres = $liste->get_espaces();
 if ($carres->count() == 0) {
 	$q = bobs_qm()->query($db, "ins_atlas_55","select distinct espace_l93_5x5.id_espace from espace_l93_5x5, espace_departement where st_intersects(espace_departement.the_geom, espace_l93_5x5.the_geom) and espace_departement.nom in ('AISNE','OISE','SOMME')",array());
@@ -73,7 +70,7 @@ if ($carres->count() == 0) {
 }
 
 
-$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_UMAM);
+$liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_AR);
 $carres = $liste->get_espaces();
 $index_c = array();
 foreach ($carres as $c) {
@@ -82,9 +79,11 @@ foreach ($carres as $c) {
 
 $pas = 5000;
 $srid = 2154;
+$amphibiens = 4088;
+$reptiles = 5277;
 
 $extraction = new bobs_extractions($db);
-$extraction->ajouter_condition(new bobs_ext_c_liste_especes(PROMONTOIRE2_ID_LISTE_ESP_UMAM));
+$extraction->ajouter_condition(new bobs_ext_c_taxon_branche($amphibiens));
 $extraction->ajouter_condition(new bobs_ext_c_indice_qualite(array('3','4')));
 $extraction->ajouter_condition(new bobs_ext_c_sans_tag_invalide());
 $extraction->ajouter_condition(new bobs_ext_c_pas_prosp_neg());
@@ -99,17 +98,17 @@ foreach ($n_carres as $c) {
 	$nom = sprintf("E%04dN%04d", ($c['x0']*$pas)/1000, ($c['y0']*$pas)/1000);
 	echo "$nom {$c['count_citation']} {$c['count_especes']}\n";
 	if (isset($index_c[$nom])) {
-		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences", $c['count_citation']);
-		$liste->espace_enregistre_attribut($index_c[$nom], "species", $c['count_especes']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences_amphib", $c['count_citation']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "species_amphib", $c['count_especes']);
 	} else {
 		bobs_log("cartes atlas-nat. : carré $nom pas dans la liste");
 	}
 }
 
-echo "Passe aux mammifères terrestre";
+echo "Passe aux reptiles";
 
 $extraction = new bobs_extractions($db);
-$extraction->ajouter_condition(new bobs_ext_c_reseau(new clicnat2_reseau($db, 'mt')));
+$extraction->ajouter_condition(new bobs_ext_c_taxon_branche($reptiles));
 $extraction->ajouter_condition(new bobs_ext_c_indice_qualite(array('3','4')));
 $extraction->ajouter_condition(new bobs_ext_c_sans_tag_invalide());
 $extraction->ajouter_condition(new bobs_ext_c_pas_prosp_neg());
@@ -124,8 +123,8 @@ foreach ($n_carres as $c) {
 	$nom = sprintf("E%04dN%04d", ($c['x0']*$pas)/1000, ($c['y0']*$pas)/1000);
 	echo "$nom {$c['count_citation']} {$c['count_especes']}\n";
 	if (isset($index_c[$nom])) {
-		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences_mt", $c['count_citation']);
-		$liste->espace_enregistre_attribut($index_c[$nom], "species_mt", $c['count_especes']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences_rept", $c['count_citation']);
+		$liste->espace_enregistre_attribut($index_c[$nom], "species_rept", $c['count_especes']);
 	} else {
 		bobs_log("cartes atlas-nat. : carré $nom pas dans la liste");
 	}
