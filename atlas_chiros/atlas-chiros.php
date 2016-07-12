@@ -82,28 +82,37 @@ foreach ($carres as $c) {
 $pas = 5000;
 $srid = 2154;
 $reseau = 'cs';
+echo "pas=$pas srid=$srid reseau=$reseau\n";
+
 $extraction = new bobs_extractions($db);
 $extraction->ajouter_condition(new bobs_ext_c_reseau(get_bobs_reseau($db, $reseau)));
 $extraction->ajouter_condition(new bobs_ext_c_indice_qualite(array('3','4')));
 $extraction->ajouter_condition(new bobs_ext_c_sans_tag_invalide());
 $extraction->ajouter_condition(new bobs_ext_c_pas_prosp_neg());
 
+echo "selection=".PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS;
 $selection = new bobs_selection($db, PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
 $selection->vider();
 
 // estivage
 $extraction->dans_selection(PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
 $selection = new bobs_selection($db, PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
+echo "retirer hivernage\n";
 $as = new bobs_selection_enlever_ou_conserver_que_hivernage($db);
 $as->set('id_selection', $selection->id_selection);
 $as->set('enlever', true);
 $as->prepare();
 $as->execute();
-
+echo "filter grand poly\n";
+$delpoly = new bobs_selection_retirer_polygon_superficie_max_espece($db);
+$delpoly->set('id_selection', $selection->id_selection);
+$delpoly->prepare();
+$delpoly->execute();
+echo "compte des carrés\n";
 $n_carres = $selection->carres_nespeces_ncitations($pas,$srid);
 foreach ($n_carres as $c) {
 	$nom = sprintf("E%04dN%04d", ($c['x0']*$pas)/1000, ($c['y0']*$pas)/1000);
-	echo "$nom {$c['count_citation']} {$c['count_especes']}\n";
+	echo "$nom {$c['count_citation']} {$c['count_especes']} {$c['citations']}\n";
 	if (isset($index_c[$nom])) {
 		$liste->espace_enregistre_attribut($index_c[$nom], "occurrences_summering", $c['count_citation']);
 		$liste->espace_enregistre_attribut($index_c[$nom], "species_summering", $c['count_especes']);
@@ -117,11 +126,17 @@ foreach ($n_carres as $c) {
 $selection->vider();
 $extraction->dans_selection(PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
 $selection = new bobs_selection($db, PROMONTOIRE2_ID_SELECTION_CARTO_CHIROS);
+
 $as = new bobs_selection_enlever_ou_conserver_que_hivernage($db);
 $as->set('id_selection', $selection->id_selection);
 $as->set('enlever', false);
 $as->prepare();
 $as->execute();
+
+$delpoly = new bobs_selection_retirer_polygon_superficie_max_espece($db);
+$delpoly->set('id_selection', $selection->id_selection);
+$delpoly->prepare();
+$delpoly->execute();
 
 $n_carres = $selection->carres_nespeces_ncitations($pas,$srid);
 foreach ($n_carres as $c) {
