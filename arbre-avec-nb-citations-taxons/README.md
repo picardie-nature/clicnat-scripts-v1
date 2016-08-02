@@ -1,12 +1,16 @@
 # Extraction du référentiel de taxons
 
 Contenu des colonnes
+
 1. le nombre de citations sous ce taxon
 2. la profondeur dans l'arbre
 3. nombre de taxons en dessous
 4. nom scientifique
 5. nom vernaculaire
 
+Aperçu du fichier généré
+
+~~~
   1107845;1;9103;Animalia;Animaux;
   12;2;9;  Annelida;Annélides, Vers annelés;
   12;3;8;    Clitellata;;
@@ -18,4 +22,4 @@ Contenu des colonnes
   1;5;2;        Glossiphoniidae;;
   1;6;1;          Glossiphonia;;
   1;7;0;            Glossiphonia complanata;;
-
+~~~
