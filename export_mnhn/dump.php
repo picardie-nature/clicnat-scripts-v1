@@ -17,6 +17,7 @@ $outdir = "selection{$selection->id_selection}";
 
 if (!file_exists($outdir))
 	mkdir($outdir);
+
 $citations = $selection->citations();
 $n = 0;
 $t = $citations->n();
@@ -30,8 +31,12 @@ foreach ($citations->ids() as $id_citation) {
 		$pprev = $p;
 	}
 	$citation = new clicnat_citation_export_sinp($db, $id_citation);
+	$citation->sauve();
+
+	$dee = $citation->current();
+
 	$doc = new DOMDocument("1.0", "UTF-8");
-	$doc->appendChild($citation->occurence($doc, true));
+	$doc->loadXML($dee['document']);
 	$doc->formatOutput = true;
 	file_put_contents("$outdir/{$citation->id_citation}.xml", $doc->saveXML());
 }
