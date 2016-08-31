@@ -3,7 +3,7 @@
  * Évalue le temps passé par les observateurs sur le site à partir du fichier de log
  */
 
-$annee = 2014;
+$annee = 2015;
 $dir_analyse = '/tmp/analyse';
 
 class bobs_evenement {
@@ -79,18 +79,18 @@ unset($e);
 $firsts = glob($dir_analyse.'/*.first');
 
 $temps = 0;
-
+define('IMIN', 60); // etait 300
 foreach ($firsts as $first) {
 	$last = str_replace('.first','.last', $first);
 	if (file_exists($last)) {
 		$tdeb = file_get_contents($first);
 		$tfin = file_get_contents($last);
-		if ($tfin - $tdeb > 300)
+		if ($tfin - $tdeb > IMIN)
 			$temps += $tfin - $tdeb;
 		else
-			$temps += 300;
+			$temps += IMIN;
 	} else {
-		$temps += 300;
+		$temps += IMIN;
 	}
 	echo "$temps\r";
 	flush();
