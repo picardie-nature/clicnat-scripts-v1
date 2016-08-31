@@ -67,7 +67,7 @@ foreach ($nb_citations_mins as $k => $t) {
 			$nb_citations_mins[$k]['n_prosp']++;
 		}
 	}
-	fwrite($csv, "Nombre de carrés prospectés : $nombre_carres_prosp avec seuil = {$nb_citations_mins[$k]['n_min']}\n");
+	fwrite($csv, "Nombre de carrés prospectés : {$nb_citations_mins[$k]['n_prosp']} avec seuil = {$nb_citations_mins[$k]['n_min']}\n");
 }
 
 // Déterminer l'emprise de l'extraction (C)
