@@ -9,25 +9,30 @@ require_once(OBS_DIR.'espece.php');
 require_once(OBS_DIR.'selection.php');
 require_once(OBS_DIR.'utilisateur.php');
 
-$seuils_orig = array(
-	'TC' => array(0,36.5,'TC'),
-	'C'  => array(36.5,68.5,'C'),
-	'AC' => array(68.5,84.5,'AC'),
-	'PC' => array(84.5,92.5,'PC'),
-	'AR' => array(92.5,96.5,'AR'),
-	'R'  => array(96.5,98.5,'R'),
-	'TR' => array(98.5,99.5,'TR'),
-	'EX' => array(99.5,100,'EX')
-);
+$seuils_orig = [
+	'TC' => [0,36.5,'TC'],
+	'C'  => [36.5,68.5,'C'],
+	'AC' => [68.5,84.5,'AC'],
+	'PC' => [84.5,92.5,'PC'],
+	'AR' => [92.5,96.5,'AR'],
+	'R'  => [96.5,98.5,'R'],
+	'TR' => [98.5,99.5,'TR'],
+	'EX' => [99.5,100,'EX']
+];
 
-if (count($argv) != 5) {
-	echo "Usage: php indice.php id_selection nb_citations_min dim_maille fichier_csv";
+if (count($argv) != 4) {
+	echo "Usage: php indice.php id_selection dim_maille fichier_csv";
 	exit(1);
 }
-
 $id_selection = $argv[1]; // numéro de la sélection qui contient les données
-$nb_citations_min = $argv[2]; // nombre de citations requis pour compter une maille prospectée
-$dim_maille = $argv[3];
+$nb_citations_mins = [ // nombre de citations requis pour compter une maille prospectée
+	"Indice1c" => ['n_min' => 1, 'n_prosp' => 0, 'seuils' => null],
+	"Indice3c" => ['n_min' => 3, 'n_prosp' => 0, 'seuils' => null],
+	"Indice5c" => ['n_min' => 5, 'n_prosp' => 0, 'seuils' => null],
+	"Indice7c" => ['n_min' => 7, 'n_prosp' => 0, 'seuils' => null],
+	"Indice10c" => ['n_min' => 10, 'n_prosp' => 0, 'seuils' => null]
+];
+$dim_maille = $argv[2];
 $proj_maille = 2154;
 get_db($db);
 
@@ -35,7 +40,7 @@ $selection = new bobs_selection($db, $id_selection);
 
 echo "Sélection : {$selection} #{$selection->id_selection}\n";
 // Compter le nombre de mailles avec nb_citations_min
-$occupation_des_mailles = array();
+$occupation_des_mailles = [];
 echo "Compte le nombre de mailles\n";
 
 $n = 0;
@@ -54,19 +59,19 @@ foreach ($selection->get_citations() as $citation) {
 			$occupation_des_mailles[$k] = 1;
 	}
 }
-$csv = fopen($argv[4],"w");
+$csv = fopen($argv[3],"w");
 $nombre_carres_prosp = 0;
-foreach ($occupation_des_mailles as $m => $n) {
-	if ($n >= $nb_citations_min) {
-		$nombre_carres_prosp++;
+foreach ($nb_citations_mins as $k => $t) {
+	foreach ($occupation_des_mailles as $m => $n) {
+		if ($n >= $nb_citations_mins[$k]['n_min']) {
+			$nb_citations_mins[$k]['n_prosp']++;
+		}
 	}
+	fwrite($csv, "Nombre de carrés prospectés : $nombre_carres_prosp avec seuil = {$nb_citations_mins[$k]['n_min']}\n");
 }
-$total = count($occupation_des_mailles);
-fwrite($csv, "Nombre de carrés prospectés : $nombre_carres_prosp avec seuil = $nb_citations_min ($total avec seuil = 1)\n");
-
 
 // Déterminer l'emprise de l'extraction (C)
-$depts = array();
+$depts = [];
 $extraction = bobs_extractions::charge_xml($db, $selection->extraction_xml);
 foreach ($extraction->conditions as $condition) {
 	fwrite($csv, $condition."\n");
@@ -84,34 +89,37 @@ $sql_carres_couverture = "select count(*) from clicnat_carre_atlas($proj_maille,
 $q = bobs_qm()->query($db,'carres', $sql_carres_couverture, array());
 $r = bobs_element::fetch($q);
 $C = $r['count'];
-
-$taux=$nombre_carres_prosp/$C;
 fwrite($csv, "$C nombre de carrés total de l'extraction. ");
+$cols_indice_csv = "";
+foreach ($nb_citations_mins as $k => $t) {
+	$nb_citations_mins[$k]['taux'] = $nb_citations_mins[$k]['n_prosp']/$C;
+	fwrite($csv, "Taux de prospection (n_cit_min) = {$nb_citations_mins[$k]['n_min']} : {$nb_citations_mins[$k]['taux']}\n");
 
-fwrite($csv, "Taux de prospection : $taux\n");
+	// calculs des nouveaux seuils
+	$seuils_ponder = [];
+	foreach ($seuils_orig as $indice => $seuil) {
+		$Rr = $seuil[0];
+		$P = 100*($C-$nb_citations_mins[$k]['n_prosp'])/$C;
+		$seuils_ponder[$indice] = [];
+		$seuils_ponder[$indice][0] = $indice=='TC'?0:$Rr+$P-($Rr*$P/100);
+		$Rr = $seuil[1];
+		$seuils_ponder[$indice][1] = $Rr+$P-($Rr*$P/100);
 
-// calculs des nouveaux seuils
-$seuils_ponder = array();
-foreach ($seuils_orig as $indice => $seuil) {
-	$Rr = $seuil[0];
-	$P = 100*($C-$nombre_carres_prosp)/$C;
-	$seuils_ponder[$indice] = array();
-	$seuils_ponder[$indice][0] = $Rr+$P-($Rr*$P/100);
-	$Rr = $seuil[1];
-	$seuils_ponder[$indice][1] = $Rr+$P-($Rr*$P/100);
+		fwrite($csv, "$k,{$seuils_ponder[$indice][0]},$indice,{$seuils_ponder[$indice][1]}\n");
 
-	fwrite($csv, $seuils_ponder[$indice][0].",$indice,".$seuils_ponder[$indice][1]."\n");	
-	
+	}
+	$nb_citations_mins[$k]['seuils'] = $seuils_ponder;
+	$cols_indice_csv .= "$k,";
 }
 
-fwrite($csv,"ID,Nom_f,Nom_s,Mailles_OQP,Rr,RRpond,Indice\n");  //entête CSV
+fwrite($csv,"ID,Nom_f,Nom_s,Mailles_OQP,Rr,RRpond,$cols_indice_csv\n");  //entête CSV
 // Evaluer chaque espèce
-foreach ($selection->especes()  as $espece) {
-	echo "termine $espece\n";
+foreach ($selection->especes() as $espece) {
+	echo "traitement de $espece\n";
 	fwrite($csv, "$espece->id_espece,");
 	fwrite($csv, str_replace(",","",$espece->nom_f).","); //pour virer les , dans les noms d'especes
 	fwrite($csv, str_replace(",","",$espece->nom_s).",");
-	$mailles = array();
+	$mailles = [];
 	foreach ($selection->get_citations() as $citation) {
 		if ($citation->id_espece != $espece->id_espece) 
 			continue;
@@ -129,12 +137,15 @@ foreach ($selection->especes()  as $espece) {
 	fwrite($csv, "$Rr_esp,");
 	fwrite($csv, "$Rr_espPond,");
 
-	foreach ($seuils_ponder as $seuil => $vals) {
-		if ($Rr_esp >= $vals[0] && $Rr_esp < $vals[1]) {
-			fwrite($csv,"$seuil");
-			break;
+	foreach ($nb_citations_mins as $k => $t) {
+		foreach ($nb_citations_mins[$k]['seuils'] as $seuil => $vals) {
+			if ($Rr_esp >= $vals[0] && $Rr_esp < $vals[1]) {
+				fwrite($csv,"$seuil,");
+				break;
+			}
 		}
 	}
+
 	fwrite($csv, "\n");
 }
 ?>
