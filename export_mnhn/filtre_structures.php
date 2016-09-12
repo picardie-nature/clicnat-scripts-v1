@@ -11,10 +11,11 @@ require_once(OBS_DIR.'sinp.php');
 $selection = new bobs_selection($db, $argv[1]);
 $a_retirer = [];
 $n = 0;
+$n_retire = 0;
 $stats = [];
 foreach ($selection->citations_avec_tag(610) as $citation) {
 	$n++;
-	echo "$n ".count($a_retirer)."\r";
+	echo "$n $n_retire ".count($a_retirer)."\r";
 	flush();	
 	$tag = $citation->get_tag(610);
 	switch ($tag['v_text']) {
@@ -29,7 +30,15 @@ foreach ($selection->citations_avec_tag(610) as $citation) {
 		default:
 			break;
 	}
+	if (count($a_retirer) >= 50) {
+		$selection->enlever_ids($a_retirer);
+		$n_retire += count($a_retirer);
+		$a_retirer = [];
+	}
 }
+if (count($a_retirer) > 0)
+	$selection->enlever_ids($a_retirer);
+
 print_r($a_retirer);
 print_r($stats);
 ?>
