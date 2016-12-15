@@ -18,9 +18,9 @@ require_once(OBS_DIR.'extractions-conditions.php');
 get_db($db);
 
 if (!defined('PROMONTOIRE2_ID_LISTE_CARTO_AR'))
-	define('PROMONTOIRE2_ID_LISTE_CARTO_AR',232);
+	define('PROMONTOIRE2_ID_LISTE_CARTO_AR',392);
 if (!defined('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM'))
-	define('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM', 20332);
+	define('PROMONTOIRE2_ID_SELECTION_CARTO_UMAM', 20981);
 
 $liste = new clicnat_listes_espaces($db, PROMONTOIRE2_ID_LISTE_CARTO_AR);
 
