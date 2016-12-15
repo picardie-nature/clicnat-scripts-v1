@@ -27,7 +27,7 @@ while ($r = bobs_element::fetch($q)) {
 		[$r['borne_a'],$r['borne_b']]
 	);
 	$n = bobs_element::fetch($q2);
-	echo "{$n['count']};";
+	echo "{$r['id_espece']};{$n['count']};";
 	echo count($pile).";";
 	echo (($r['borne_b']-$r['borne_a']-1)/2).";";
 	echo str_pad("", (count($pile)-1)*2, " ");
