@@ -109,10 +109,10 @@ foreach ($nb_citations_mins as $k => $t) {
 
 	}
 	$nb_citations_mins[$k]['seuils'] = $seuils_ponder;
-	$cols_indice_csv .= "$k,";
+	$cols_indice_csv .= "rrpond_$k,indice_$k,";
 }
 
-fwrite($csv,"ID,Nom_f,Nom_s,Mailles_OQP,Rr,RRpond,$cols_indice_csv\n");  //entête CSV
+fwrite($csv,"ID,Nom_f,Nom_s,Mailles_OQP,Rr,$cols_indice_csv\n");  //entête CSV
 // Evaluer chaque espèce
 foreach ($selection->especes() as $espece) {
 	echo "traitement de $espece\n";
@@ -133,13 +133,14 @@ foreach ($selection->especes() as $espece) {
 	$n_mailles = count($mailles);
 	fwrite($csv, "$n_mailles,");
 	$Rr_esp = 100 - 100 * ($n_mailles/$C);
-	$Rr_espPond = $Rr_esp-($P-($Rr_esp*$P/100)); //Pour comparaison entre différent lots de données
 	fwrite($csv, "$Rr_esp,");
-	fwrite($csv, "$Rr_espPond,");
 
 	foreach ($nb_citations_mins as $k => $t) {
+		$P = 100*($C-$nb_citations_mins[$k]['n_prosp'])/$C;
+		$Rr_espPond = $Rr_esp-($P-($Rr_esp*$P/100)); //Pour comparaison entre différent lots de données
 		foreach ($nb_citations_mins[$k]['seuils'] as $seuil => $vals) {
 			if ($Rr_esp >= $vals[0] && $Rr_esp < $vals[1]) {
+				fwrite($csv, "$Rr_espPond,");
 				fwrite($csv,"$seuil,");
 				break;
 			}
