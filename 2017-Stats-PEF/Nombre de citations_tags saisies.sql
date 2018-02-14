@@ -1,0 +1,1 @@
+select count(*) from citations_tags where id_tag=624 and v_int!=2014 ;
